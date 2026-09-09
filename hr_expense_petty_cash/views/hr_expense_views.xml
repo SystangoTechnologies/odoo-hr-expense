@@ -10,7 +10,7 @@
                     <field
                         name="petty_cash_id"
                         required="payment_mode == 'petty_cash'"
-                        readonly="state != 'draft'"
+                        readonly="state == 'draft'"
                         class="oe_inline"
                     />
                 </div>

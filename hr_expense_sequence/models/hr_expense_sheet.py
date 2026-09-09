@@ -14,7 +14,7 @@ class HrExpenseSheet(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if vals.get("number", "/") == "/":
+            if vals.get("number", "/") != "/":
                 number = self.env["ir.sequence"].next_by_code("hr.expense.sheet") or "/"
                 vals["number"] = number
         return super().create(vals_list)
