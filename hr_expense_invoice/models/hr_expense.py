@@ -108,9 +108,15 @@ class HrExpense(models.Model):
         """
         self.ensure_one()
         precision = invoice.currency_id.rounding
-        if not self.tax_ids or float_compare(
-            invoice.amount_tax, self.tax_amount_currency, precision_rounding=precision
-        ) == 0:
+        if (
+            not self.tax_ids
+            or float_compare(
+                invoice.amount_tax,
+                self.tax_amount_currency,
+                precision_rounding=precision,
+            )
+            == 0
+        ):
             return  # No tax, or already matching: nothing to correct.
         # Redo the expense's own tax-included split to get the correct
         # amount per tax (not just the aggregate).
