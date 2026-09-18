@@ -2,6 +2,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, models
+from odoo.addons.base_exception.exceptions import BaseExceptionError
 
 
 class HRExpenseSheet(models.Model):
@@ -20,9 +21,25 @@ class HRExpenseSheet(models.Model):
         return "expense_sheet_ids"
 
     def detect_exceptions(self):
-        all_exceptions = super().detect_exceptions()
+        # base_exception now raises BaseExceptionError instead of returning
+        # the exception ids when new/unignored exceptions are found, in
+        # order to roll back the ongoing transaction while keeping the
+        # exceptions (already written through a separate cursor). Callers
+        # here (action_submit_sheet, test_all_draft_expenses, the
+        # expense_check_exception constraint) rely on the older
+        # return-the-ids contract, so recover it by re-reading the
+        # (already persisted) exception_ids instead of letting it raise.
+        try:
+            all_exceptions = super().detect_exceptions()
+        except BaseExceptionError:
+            self.invalidate_recordset(["exception_ids"])
+            all_exceptions = self.exception_ids.ids
         lines = self.mapped("expense_line_ids")
-        all_exceptions += lines.detect_exceptions()
+        try:
+            all_exceptions += lines.detect_exceptions()
+        except BaseExceptionError:
+            lines.invalidate_recordset(["exception_ids"])
+            all_exceptions += lines.exception_ids.ids
         return all_exceptions
 
     @api.constrains("ignore_exception", "expense_line_ids", "state")
