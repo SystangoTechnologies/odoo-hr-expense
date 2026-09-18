@@ -27,20 +27,23 @@ class HRExpenseSheet(models.Model):
         # exceptions (already written through a separate cursor). Callers
         # here (action_submit_sheet, test_all_draft_expenses, the
         # expense_check_exception constraint) rely on the older
-        # return-the-ids contract, so recover it by re-reading the
-        # (already persisted) exception_ids instead of letting it raise.
+        # return-the-ids contract, so recover it instead of letting it
+        # raise. Both calls below write onto this sheet's own
+        # exception_ids (hr.expense has no exception_ids field itself:
+        # its _get_main_records() maps line-level rule matches back to
+        # sheet_id), so re-reading self.exception_ids once at the end
+        # covers both.
         try:
-            all_exceptions = super().detect_exceptions()
+            super().detect_exceptions()
         except BaseExceptionError:
-            self.invalidate_recordset(["exception_ids"])
-            all_exceptions = self.exception_ids.ids
+            pass
         lines = self.mapped("expense_line_ids")
         try:
-            all_exceptions += lines.detect_exceptions()
+            lines.detect_exceptions()
         except BaseExceptionError:
-            lines.invalidate_recordset(["exception_ids"])
-            all_exceptions += lines.exception_ids.ids
-        return all_exceptions
+            pass
+        self.invalidate_recordset(["exception_ids"])
+        return self.exception_ids.ids
 
     @api.constrains("ignore_exception", "expense_line_ids", "state")
     def expense_check_exception(self):
