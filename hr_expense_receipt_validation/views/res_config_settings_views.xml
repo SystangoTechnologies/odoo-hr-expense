@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field
+            name="name"
+        >res.config.settings.view.form.inherit.hr.expense.receipt.validation</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_expense.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <setting id="expense_extract_settings" position="after">
+                <setting
+                    id="expense_receipt_validation_setting"
+                    string="Receipt Validation"
+                    company_dependent="1"
+                    help="Warn or block the submission of expenses that have no receipt attached."
+                >
+                    <field name="expense_receipt_validation" widget="radio" />
+                </setting>
+            </setting>
+        </field>
+    </record>
+</odoo>
